@@ -13,9 +13,10 @@ jobs:
         with:
           submodules: recursive
 
-      # 替换为当前稳定可用的 Setup NDK Action
+      # 使用社区主流且稳定的 setup-ndk Action
       - name: Set up Android NDK
-        uses: nsetup/setup-android-ndk@v1.3.1
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
         with:
           ndk-version: r26b
 
@@ -26,7 +27,8 @@ jobs:
 
       - name: Build Module
         run: |
-          export ANDROID_NDK_HOME=$ANDROID_NDK_ROOT
+          export ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
+          export ANDROID_NDK_ROOT=${{ steps.setup-ndk.outputs.ndk-path }}
           chmod +x ./build.sh || true
           if [ -f "./build.sh" ]; then
             ./build.sh
