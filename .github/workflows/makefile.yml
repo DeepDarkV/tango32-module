@@ -13,30 +13,33 @@ jobs:
         with:
           submodules: recursive
 
-      # 使用社区主流且稳定的 setup-ndk Action
       - name: Set up Android NDK
         uses: nttld/setup-ndk@v1
         id: setup-ndk
         with:
           ndk-version: r26b
 
-      - name: Set up Clang & Build Tools
+      - name: Install Build Tools & Kernel Headers
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential clang llvm libssl-dev
+          sudo apt-get install -y build-essential clang llvm libssl-dev linux-headers-generic bc libelf-dev
 
-      - name: Build Module
+      - name: Build Module with Verbose Log
         run: |
           export ANDROID_NDK_HOME=${{ steps.setup-ndk.outputs.ndk-path }}
           export ANDROID_NDK_ROOT=${{ steps.setup-ndk.outputs.ndk-path }}
+          
           chmod +x ./build.sh || true
+          
+          # 增加编译日志输出，方便定位具体 C 语言语法/头文件缺失报错
           if [ -f "./build.sh" ]; then
-            ./build.sh
+            ./build.sh V=1
           else
-            make -j$(nproc)
+            make -j$(nproc) V=1
           fi
 
       - name: Upload Build Artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: tango32-built-artifacts
