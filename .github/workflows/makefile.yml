@@ -1,0 +1,48 @@
+name: Build Tango32 Kernel Module
+
+on:
+  workflow_dispatch: # 支持在 Actions 界面手动点击按钮触发
+  push:
+    branches: [ "main", "master" ] # 提交代码到主分支时触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code with Submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive # 递归拉取子模块
+
+      - name: Set up Android NDK
+        uses: nszhang/setup-android-ndk@v1
+        with:
+          ndk-version: r26b # 建议指定使用的 NDK 版本
+
+      - name: Set up Clang & Build Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang llvm libssl-dev
+
+      - name: Build Module
+        run: |
+          export ANDROID_NDK_HOME=$ANDROID_NDK_ROOT
+          chmod +x ./build.sh || true
+          # 若仓库中存在 build.sh 则直接调用，否则使用 make 进行编译
+          if [ -f "./build.sh" ]; then
+            ./build.sh
+          else
+            make -j$(nproc)
+          fi
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tango32-built-artifacts
+          path: |
+            *.ko
+            out/
+            build/
+            dist/
+          if-no-files-found: warn
