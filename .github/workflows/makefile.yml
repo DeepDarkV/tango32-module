@@ -18,14 +18,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential gcc-aarch64-linux-gnu g++-aarch64-linux-gnu clang llvm libssl-dev bc libelf-dev
 
-      - name: Download & Setup Android Common Kernel (ACK) Headers
+      - name: Download & Setup Kernel Source
         run: |
-          # 克隆极简的 ARM64 内核头文件或定义
+          # 克隆极简 ARM64 内核源码
           git clone --depth=1 https://github.com/torvalds/linux.git -b v6.1 ACK_SRC
+          
+          # 生成 ARM64 默认配置并预编译内核头文件/脚本
+          make -C ACK_SRC ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- defconfig
+          make -C ACK_SRC ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- modules_prepare
 
       - name: Build Module for ARM64
         run: |
-          # 显式指定 ARM64 架构与交叉编译工具链
+          # 编译 tango32 模块
           make -C ACK_SRC ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- M=$PWD CONFIG_TANGO32=m modules
 
       - name: Upload Build Artifacts
